@@ -9,31 +9,37 @@ clock = pygame.time.Clock()
 
 
 class Vertex:
-    static_id=0
-    def __init__(self, x, y, incident_edge=None):
+    static_id = 0
+    def __init__(self, x,
+                 y, incident_edge=None):
         self.x = x
         self.y = y
         self.incident_edge = incident_edge
         self.id=self.static_id
-        self.static_id+=1
+        self.static_id += 1
+
 
 class Edge:
-    static_id=0
+    static_id = 0
+
     def __init__(self, origin, twin, next_edge, prev_edge, incident_face):
         self.origin = origin
         self.twin = twin
         self.next_edge = next_edge
         self.prev_edge = prev_edge
         self.incident_face = incident_face
-        self.id=self.static_id
-        self.static_id+=1
+        self.id = self.static_id
+        self.static_id += 1
+
 
 class Face:
-    static_id=0
+    static_id = 0
+
     def __init__(self, edge_start):
         self.edge_start=edge_start
-        self.id=self.static_id
-        self.static_id+=1
+        self.id = self.static_id
+        self.static_id += 1
+
 
 class DCEL:
     def __init__(self):
@@ -58,7 +64,7 @@ class DCEL:
         return new_face
 
 
-def drawgrid(width, rows, surface):
+def draw_grid(width, rows, surface):
     sizebtwn = width // rows 
     print(sizebtwn)
 
@@ -83,6 +89,7 @@ class Current:
 current = Current()
 dcel = DCEL()
 
+
 class View:
     def update(self, sizebtwn, surface):
         x, y = pygame.mouse.get_pos()
@@ -92,32 +99,27 @@ class View:
         ix = x // sizebtwn
         iy = y // sizebtwn
 
-        mouseX = ix * sizebtwn
-        mouseY = iy * sizebtwn
-
-        #self.cx, self.cy = ix * sizebtwn, iy * sizebtwn
-
         mouseX = x
         mouseY = y
 
         offsetX = x % sizebtwn
         offsetY = y % sizebtwn
 
-        if (offsetX > (sizebtwn/2)):
-            if(offsetY > (sizebtwn/2)): # bottom right corner
+        if offsetX > (sizebtwn/2):
+            if offsetY > (sizebtwn/2): # bottom right corner
                 mouseX += sizebtwn - offsetX
                 mouseY += sizebtwn - offsetY
 
-            elif (offsetY < (sizebtwn/2)): # top right corner
+            elif offsetY < (sizebtwn/2): # top right corner
                 mouseX += sizebtwn - offsetX
                 mouseY -= offsetY
 
-        elif (offsetX < (sizebtwn/2)):
-            if(offsetY < (sizebtwn/2)): # top left corner
+        elif offsetX < (sizebtwn/2):
+            if offsetY < (sizebtwn/2): # top left corner
                 mouseX -= offsetX
                 mouseY -= offsetY
 
-            elif (offsetY > (sizebtwn/2)): # bottom right corner
+            elif offsetY > (sizebtwn/2): # bottom right corner
                 mouseX -= offsetX
                 mouseY += sizebtwn - offsetY
 
@@ -132,33 +134,32 @@ class View:
             current.face_vertices.append(current.start_vertex)
             current.face_first_vertex = Vertex(self.cx, self.cy)
         else:
-            current.end_vertex = dcel.add_vertex(self.cx, self.cy)
+            current.end_vertex = dcel.add_vertex(self.cx, self.cy)                
+            pygame.draw.line(surface, (255, 0, 0), (current.start_vertex.x, current.start_vertex.y), (current.end_vertex.x, current.end_vertex.y))
+            edge = dcel.add_edge(origin=current.start_vertex, prev_edge=current.last_edge)
+            edge.twin = dcel.add_edge(origin=current.end_vertex, twin=edge)
+
             if current.end_vertex.x == current.face_first_vertex.x and current.end_vertex.y == current.face_first_vertex.y:
+                current.face_edges[0].prev_edge = edge
+                edge.next_edge = current.face_edges[0]
+                current.face_edges[0].twin.next = edge.twin
                 face = dcel.add_face(current.face_edges[0])
                 for edge in current.face_edges:
                     edge.incident_face = face
                 current.face_edges.clear()
                 current.face_vertices.clear()
-                
-            pygame.draw.line(surface, (255, 0, 0), (current.start_vertex.x, current.start_vertex.y), (current.end_vertex.x, current.end_vertex.y))
-            #origin, twin, next_edge, prev_edge, incident_face=None
-            edge = dcel.add_edge(origin=current.start_vertex, prev_edge=current.last_edge)
-            edge.twin = dcel.add_edge(origin=current.end_vertex, twin=edge)
 
             if current.last_edge is not None:
                 edge.twin.next_edge = current.last_edge.twin
                 current.last_edge.next_edge = edge
 
             current.face_edges.append(edge)
-            #current.last_edge.next_edge = edge
             current.last_edge = edge
             current.start_vertex = Vertex(current.end_vertex.x, current.end_vertex.y)
             current.end_vertex = None
-        
-        
 
     def draw_vertex(self, surface):
-        color = (0, 0, 0) # (255, 255, 255)
+        color = (0, 0, 0) 
         vertex_radius = 3
         pygame.draw.circle(surface, color, (self.cx, self.cy), vertex_radius)
         self.draw_edge(surface)
@@ -167,12 +168,11 @@ class View:
 view = View()
 run = True
 
-screen.fill((255, 255, 255)) # 0
+screen.fill((255, 255, 255)) 
 print(screen.get_width())
 
 num_of_cols = 100
-drawgrid(screen.get_width(), num_of_cols, screen)
-#pygame.display.flip()
+draw_grid(screen.get_width(), num_of_cols, screen)
 
 
 while run:
